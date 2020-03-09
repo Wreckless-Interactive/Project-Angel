@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c97ba23ad0cfaa64f9d4b81f53a8300d, type: 3}
+  m_Name: Small Health Vial
+  m_EditorClassIdentifier: 
+  itemName: Small Health Vial
+  itemDescription: Test
+  itemID: 0
+  itemIcon: {fileID: 0}
+  worth: 1
+  restoreType: 0
+  restoreValue: 25
