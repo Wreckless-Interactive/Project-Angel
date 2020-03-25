@@ -277,16 +277,6 @@ public class BattleManager : MonoBehaviour
 
     #region Unity Methods
 
-    private void Update()
-    {
-
-        if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            currentCharacter.AddStatusEffect<Poison>();
-        }
-
-    }
-
     private void Awake()
     {
         Instance = this;
