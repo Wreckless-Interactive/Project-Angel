@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using TMPro;
 
 public class BattleHUD : MonoBehaviour
 {
@@ -12,6 +14,8 @@ public class BattleHUD : MonoBehaviour
 
     public GameObject battleHUD;
 
+    public EventSystem eventSystem;
+
     [Header("Character Cards")]
     public GameObject partyCardPrefab;
     public Transform partyCardPanel;
@@ -20,11 +24,10 @@ public class BattleHUD : MonoBehaviour
 
     [Header("Selection Menus")]
     public Transform mainMenu;
-    public Transform characterMenu;
     public Transform inventoryMenu;
     public Transform stanceMenu;
     public Dictionary<MenuType, Transform> menuDictionary;
-    public enum MenuType { None, Main, Character, Inventory, Stance };
+    public enum MenuType { None, Main, Inventory, Stance };
     public MenuType currentMenu;
     private Transform currentSelectionMenu = null;
 
@@ -32,7 +35,8 @@ public class BattleHUD : MonoBehaviour
     public GameObject buttonPrefab;
     private int selectionIndex;
     private bool canSelect;
-    private List<Wreckless.UI.Button> buttons;
+    private List<Button> buttons;
+    private GameObject lastSelectedButton;
 
     #endregion
 
@@ -108,7 +112,6 @@ public class BattleHUD : MonoBehaviour
         menuDictionary = new Dictionary<MenuType, Transform>();
 
         menuDictionary.Add(MenuType.Main, mainMenu);
-        menuDictionary.Add(MenuType.Character, characterMenu);
         menuDictionary.Add(MenuType.Inventory, inventoryMenu);
         menuDictionary.Add(MenuType.Stance, stanceMenu);
     }
@@ -140,7 +143,7 @@ public class BattleHUD : MonoBehaviour
 
         currentMenu = type;
         currentSelectionMenu = currentMenuTransform;
-        InitButtonSelection(currentMenuTransform);
+        StartCoroutine(InitButtonSelection(currentMenuTransform));
 
     }
 
@@ -151,9 +154,7 @@ public class BattleHUD : MonoBehaviour
     public IEnumerator SetupButtons<T>(T type)
     {
 
-        if (type is List<BattleCharacter>)
-            UpdateMenu(MenuType.Character);
-        else if (type is Dictionary<Item, int>)
+        if (type is Dictionary<Item, int>)
             UpdateMenu(MenuType.Inventory);
 
         DeleteButtons();
@@ -172,93 +173,38 @@ public class BattleHUD : MonoBehaviour
         {
             if (currentMenu != MenuType.Main)
             {
-                foreach (Wreckless.UI.Button button in buttons)
+                foreach (Button button in buttons)
                 {
                     Destroy(button.gameObject);
                 }
             }
         }
 
-        buttons = new List<Wreckless.UI.Button>();
+        buttons = new List<Button>();
 
     }
 
     //Spawns in buttons based on the type passed through
     private void SpawnButtons<T>(T type)
     {
-
-        if (type is List<BattleCharacter>)
-        {
-            foreach(BattleCharacter c in (type as List<BattleCharacter>))
-            {
-                Transform obj = Instantiate(buttonPrefab, currentSelectionMenu).transform;
-                obj.GetComponent<Wreckless.UI.Button>().SetButtonTxt(c.info.characterName);
-                obj.GetComponent<Wreckless.UI.Button>().OnSelect.AddListener(delegate { StartCoroutine(BattleManager.Instance.DealDamage(c)); });
-                buttons.Add(obj.GetComponent<Wreckless.UI.Button>());
-            }
-        }
-        else if(type is Dictionary<Item, int>)
+        
+        if(type is Dictionary<Item, int>)
         {
             List<Item> items = new List<Item>((type as Dictionary<Item, int>).Keys);
 
             foreach(Item i in items)
             {
                 Transform obj = Instantiate(buttonPrefab, currentSelectionMenu).transform;
-                obj.GetComponent<Wreckless.UI.Button>().SetButtonTxt($"{i.itemName}  {(type as Dictionary<Item, int>)[i]}");
-                obj.GetComponent<Wreckless.UI.Button>().OnSelect.AddListener(delegate { StartCoroutine(SetupButtons(BattleManager.Instance.GetPartyList())); });
-                buttons.Add(obj.GetComponent<Wreckless.UI.Button>());
+                obj.GetChild(0).GetComponent<TextMeshProUGUI>().text = ($"{i.itemName}  {(type as Dictionary<Item, int>)[i]}");
+                obj.GetComponent<Button>().onClick.AddListener(delegate { StartCoroutine(SetupButtons(BattleManager.Instance.GetPartyList())); });
+                buttons.Add(obj.GetComponent<Button>());
             }
 
         }
 
     }
 
-    //Sets up the buttons for selection
-    private void InitButtonSelection(Transform parent)
-    {
-
-        if (parent == null)
-            return;
-
-        buttons = parent.GetComponentsInChildren<Wreckless.UI.Button>().ToList();
-
-        selectionIndex = 0;
-        canSelect = true;
-
-    }
-
-    //Being called by the Update method, this method allows the player to
-    //Select buttons
-    private void SelectButton()
-    {
-
-        if (!canSelect)
-            return;
-
-        if (Input.GetKeyDown(KeyCode.W))
-            selectionIndex--;
-        else if (Input.GetKeyDown(KeyCode.S))
-            selectionIndex++;
-
-        if (selectionIndex < 0)
-            selectionIndex = buttons.Count - 1;
-        else if (selectionIndex == buttons.Count)
-            selectionIndex = 0;
-
-        for (int i = 0; i < buttons.Count; i++)
-        {
-            buttons[i].SetSelectorActive(false);
-            if (i == selectionIndex)
-                buttons[i].SetSelectorActive(true);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Return))
-        {
-            canSelect = false;
-            buttons[selectionIndex].Select();
-        }
-
-    }
+   
 
     #endregion
 
@@ -318,6 +264,16 @@ public class BattleHUD : MonoBehaviour
         }
     }
 
+    private IEnumerator InitButtonSelection(Transform currentMenu)
+    {
+        if (currentMenu != null)
+        {
+            eventSystem.SetSelectedGameObject(null);
+            yield return new WaitForEndOfFrame();
+            eventSystem.SetSelectedGameObject(currentMenu.GetChild(0).gameObject);
+        }
+    }
+
     #endregion
 
     #region Unity Methods
@@ -328,11 +284,17 @@ public class BattleHUD : MonoBehaviour
         if (battleHUD.activeSelf != BattleManager.Instance.InBattle)
             battleHUD.SetActive(BattleManager.Instance.InBattle);
 
-        if (!BattleManager.Instance.InBattle)
-            return;
+        if (eventSystem.currentSelectedGameObject != null)
+            lastSelectedButton = eventSystem.currentSelectedGameObject;
+        else
+            eventSystem.SetSelectedGameObject(lastSelectedButton);
 
-        SelectButton();
+    }
 
+    private void Start()
+    {
+        if (eventSystem == null)
+            eventSystem = FindObjectOfType<EventSystem>();
     }
 
     private void Awake()

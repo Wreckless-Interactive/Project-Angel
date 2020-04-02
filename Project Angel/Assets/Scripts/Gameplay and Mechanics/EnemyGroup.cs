@@ -29,6 +29,9 @@ public class EnemyGroup : MonoBehaviour
         {
             float dist = Vector3.Distance(enemy.transform.position, Player.transform.position);
 
+            if (!enemy.chaseTarget)
+                enemy.SetTarget(Player.transform);
+
             if (dist <= 2)
             {
                 enteredBattle = true;

@@ -41,6 +41,7 @@ GameObject:
   - component: {fileID: 8252871549422980299}
   - component: {fileID: 5929729178566777273}
   - component: {fileID: 4694295285110583564}
+  - component: {fileID: -3295721715463071535}
   m_Layer: 0
   m_Name: Demon_Dummy
   m_TagString: Untagged
@@ -126,4 +127,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   info: {fileID: 11400000, guid: a5e0a99c75eb03848b5f24184ab11f03, type: 2}
+  startingPoint: {x: 0, y: 0, z: 0}
   characterCardPivot: {fileID: 7219652605878249200}
+--- !u!114 &-3295721715463071535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628816593607864740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24e469a80e4eaa742b8c8c1f66f8a8dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

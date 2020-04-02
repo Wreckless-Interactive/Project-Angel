@@ -38,7 +38,9 @@ public class LevelManager : MonoBehaviour
                 }
                 while (Physics.CheckBox(point.position + randomPos, halfExtentCheck, Quaternion.identity));
 
-                GameObject enemy = Instantiate(levelEnemies[0].wCharacter.gameObject, Vector3.zero, Quaternion.identity, point);
+                int enemyIndex = Random.Range(0, levelEnemies.Count);
+
+                GameObject enemy = Instantiate(levelEnemies[enemyIndex].wCharacter.gameObject, Vector3.zero, Quaternion.identity, point);
                 enemy.transform.localPosition = randomPos;
 
                 point.GetComponent<EnemyGroup>().AddEnemy(enemy.GetComponent<WorldCharacter_Enemy>());

@@ -28,6 +28,9 @@ public class BattleManager : MonoBehaviour
     private QueueList<BattleCharacter> turnQueue;
     private BattleCharacter currentCharacter;
 
+    private bool selectingCharacter;
+    private BattleCharacter selectedCharacter;
+
     public bool InBattle { get; private set; }
 
     #endregion
@@ -42,6 +45,10 @@ public class BattleManager : MonoBehaviour
 
         //Spawn in new characters
         SpawnCharacters(party, enemies);
+
+        CameraManager.Instance.ResetBattleCameraPosition();
+        selectingCharacter = false;
+        selectedCharacter = null;
 
         BattleHUD.Instance.InitHUD(characterList);
 
@@ -137,12 +144,12 @@ public class BattleManager : MonoBehaviour
 
     public void Weapon()
     {
-        StartCoroutine(BattleHUD.Instance.SetupButtons(enemyList));
+        StartCoroutine(SelectCharacter<BattleCharacter_Enemy>());
     }
 
     public void Cast()
     {
-        StartCoroutine(BattleHUD.Instance.SetupButtons(enemyList));
+        StartCoroutine(SelectCharacter<BattleCharacter_Enemy>());
     }
 
     public void Guard()
@@ -192,7 +199,7 @@ public class BattleManager : MonoBehaviour
 
     private void EnemyTurn()
     {
-        StartCoroutine(DealDamage(characterList[0]));
+        currentCharacter.GetComponent<BattleAI>().DoTurn();
     }
 
     #endregion
@@ -224,12 +231,12 @@ public class BattleManager : MonoBehaviour
 
     }
 
-    public IEnumerator DealDamage(BattleCharacter attackee)
+    public IEnumerator DealDamage()
     {
 
         BattleHUD.Instance.UpdateMenu(BattleHUD.MenuType.None);
 
-        attackee.TakeDamage(currentCharacter);
+        selectedCharacter.TakeDamage(currentCharacter);
 
         yield return new WaitForSeconds(1f);
 
@@ -275,7 +282,70 @@ public class BattleManager : MonoBehaviour
         return partyList;
     }
 
+    List<BattleCharacter> tempList;
+    int index = 0;
+
+    private IEnumerator SelectCharacter<T>()where T : BattleCharacter
+    {
+
+        BattleHUD.Instance.UpdateMenu(BattleHUD.MenuType.None);
+
+        tempList = characterList.Where(x => x.GetType() == typeof(T)).ToList();
+        index = 0;
+        yield return new WaitForEndOfFrame();
+        selectingCharacter = true;
+    }
+
+    private void CharacterSelector()
+    {
+        if (!selectingCharacter)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+            index++;
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+            index--;
+
+        if (index < 0)
+            index = tempList.Count - 1;
+        else if (index == tempList.Count)
+            index = 0;
+
+        selectedCharacter = tempList[index];
+
+        if(selectedCharacter)
+            CameraManager.Instance.SetBattleCameraPosition(selectedCharacter.transform.position);
+
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            selectingCharacter = false;
+            CameraManager.Instance.ResetBattleCameraPosition();
+            StartCoroutine(DealDamage());
+        }
+
+    }
+
+    public void SetSelectedCharacter(BattleCharacter character)
+    {
+        selectedCharacter = character;
+    }
+
+    public List<BattleCharacter> GetPartyMembers()
+    {
+        return characterList.Where(x => x.GetType() == typeof(BattleCharacter_Party)).ToList();
+    }
+
     #region Unity Methods
+
+    private void Update()
+    {
+
+        if (!InBattle)
+            return;
+
+        CharacterSelector();
+
+    }
 
     private void Awake()
     {
