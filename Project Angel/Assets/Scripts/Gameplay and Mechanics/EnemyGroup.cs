@@ -9,8 +9,20 @@ public class EnemyGroup : MonoBehaviour
 
     private PlayerController Player => FindObjectOfType<PlayerController>();
 
-    private bool checkPlayerDist;
     private bool enteredBattle = false;
+
+    private List<BattleCharacter> enemyBChars = new List<BattleCharacter>();
+    public List<BattleCharacter> party = new List<BattleCharacter>();
+
+    public bool CanChase { get; private set; }
+
+    private void Start()
+    {
+        foreach (WorldCharacter_Enemy enemy in enemies)
+        {
+            enemyBChars.Add(enemy.battleCharacter);
+        }
+    }
 
     private void Update()
     {
@@ -18,44 +30,34 @@ public class EnemyGroup : MonoBehaviour
         if (enteredBattle)
             return;
 
-        float distFromCenter = Vector3.Distance(Player.transform.position, transform.position);
+        float distFromPlayer = Vector3.Distance(transform.position, Player.transform.position);
 
-        checkPlayerDist = distFromCenter < 10f;
-
-        if (!checkPlayerDist)
-            return;
-
-        foreach(WorldCharacter_Enemy enemy in enemies)
+        if(distFromPlayer <= 20f)
         {
-            float dist = Vector3.Distance(enemy.transform.position, Player.transform.position);
-
-            if (!enemy.chaseTarget)
-                enemy.SetTarget(Player.transform);
-
-            if (dist <= 2)
-            {
-                enteredBattle = true;
-            }
+            CanChase = true;
         }
+        else if(distFromPlayer > 20f)
+        {
+            CanChase = true;
+        }
+
 
     }
 
     public void AddEnemy(WorldCharacter_Enemy enemy)
     {
         enemies.Add(enemy);
+        enemy.InitCharacter(Player.transform, this);
     }
 
-    private void OnDrawGizmos()
+    public void StartBattle()
     {
-
-        if (!checkPlayerDist)
-            return;
-
-        foreach (WorldCharacter_Enemy enemy in enemies)
+        if (!enteredBattle)
         {
-            Gizmos.DrawLine(enemy.transform.position, Player.transform.position);
+            CanChase = false;
+            enteredBattle = true;
+            BattleManager.Instance.InitBattle(party, enemyBChars);
         }
-
     }
 
 }

@@ -8,7 +8,10 @@ public class LevelManager : MonoBehaviour
     public static LevelManager Instance;
 
     [Header("Enemies")]
-    public List<Character> levelEnemies;
+    public List<WorldCharacter> levelEnemies;
+    [Tooltip("Maximum number of enemies per group")]
+    [Range(1, 4)]
+    public int maxEnemeies = 2;
     public Vector3 halfExtentCheck;
 
     public void SpawnInEnemies(List<Transform> groupPoints)
@@ -17,7 +20,7 @@ public class LevelManager : MonoBehaviour
         foreach(Transform point in groupPoints)
         {
 
-            int groupAmount = Random.Range(0, 4);
+            int groupAmount = Random.Range(1, maxEnemeies);
 
             for(int i = 0; i <= groupAmount; i++)
             {
@@ -40,7 +43,7 @@ public class LevelManager : MonoBehaviour
 
                 int enemyIndex = Random.Range(0, levelEnemies.Count);
 
-                GameObject enemy = Instantiate(levelEnemies[enemyIndex].wCharacter.gameObject, Vector3.zero, Quaternion.identity, point);
+                GameObject enemy = Instantiate(levelEnemies[enemyIndex].gameObject, Vector3.zero, Quaternion.identity, point);
                 enemy.transform.localPosition = randomPos;
 
                 point.GetComponent<EnemyGroup>().AddEnemy(enemy.GetComponent<WorldCharacter_Enemy>());
